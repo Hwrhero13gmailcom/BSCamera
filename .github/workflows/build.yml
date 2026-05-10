@@ -46,8 +46,10 @@ jobs:
         run: |
           cd ${{ github.workspace }}
           qpm qmod manifest
-          cp build/libcamera-offset-mod_0_1_0.so .
-          zip CameraOffsetMod.qmod mod.json libcamera-offset-mod_0_1_0.so
+          ls build/
+          cp build/lib*.so . 2>/dev/null || true
+          ls *.so
+          zip CameraOffsetMod.qmod mod.json lib*.so
 
       - name: Upload qmod
         uses: actions/upload-artifact@v4
