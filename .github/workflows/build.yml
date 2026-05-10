@@ -1,0 +1,59 @@
+name: Build
+env:
+  module_id: camera-offset-mod_0_1_0
+  qmodName: CameraOffsetMod
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - 'version*'
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout
+        with:
+          submodules: true
+          lfs: true
+      - uses: seanmiddleditch/gha-setup-ninja@v3
+      - name: Create ndkpath.txt
+        run: |
+          echo "$ANDROID_NDK_LATEST_HOME" > ${GITHUB_WORKSPACE}/ndkpath.txt
+          cat ${GITHUB_WORKSPACE}/ndkpath.txt
+      - name: QPM Action
+        uses: Fernthedev/qpm-action@v1
+        with:
+          workflow_token: ${{ secrets.GITHUB_TOKEN }}
+          restore: true
+          resolve_ndk: true
+          cache: true
+      - name: List Post Restore
+        run: |
+          echo includes:
+          ls -la ${GITHUB_WORKSPACE}/extern/includes
+          echo libs:
+          ls -la ${GITHUB_WORKSPACE}/extern/libs
+      - name: Build
+        run: |
+          cd ${GITHUB_WORKSPACE}
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build
+          cmake --build build
+      - name: Package qmod
+        run: |
+          cd ${GITHUB_WORKSPACE}
+          cp build/lib${module_id}.so lib${module_id}.so
+          zip -j ${{ env.qmodName }}.qmod mod.json lib${module_id}.so
+      - name: Upload qmod artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.qmodName }}.qmod
+          path: ./${{ env.qmodName }}.qmod
+          if-no-files-found: error
+      - name: Upload so artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lib${{ env.module_id }}.so
+          path: ./build/lib${{ env.module_id }}.so
+          if-no-files-found: error
