@@ -17,11 +17,15 @@ jobs:
           submodules: true
 
       - name: Install QPM
-        uses: Fernthedev/qpm-action@main
-        with:
-          workflow_token: ${{ secrets.GITHUB_TOKEN }}
-          restore: true
-          cache: true
+        run: |
+          curl -o qpm --location https://github.com/QuestPackageManager/QPM.CLI/releases/latest/download/qpm-linux-x64
+          chmod +x qpm
+          sudo mv qpm /usr/local/bin/qpm
+
+      - name: QPM Restore
+        run: |
+          cd ${{ github.workspace }}
+          qpm restore
 
       - name: Build
         run: |
