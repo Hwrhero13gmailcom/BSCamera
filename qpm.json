@@ -37,13 +37,6 @@
       "additionalData": {
         "includeQmod": false
       }
-    },
-    {
-      "id": "scotland2",
-      "versionRange": "^0.1.4",
-      "additionalData": {
-        "includeQmod": false
-      }
     }
   ],
   "scripts": {
