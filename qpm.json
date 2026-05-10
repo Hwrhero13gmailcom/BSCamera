@@ -23,6 +23,8 @@
       "additionalData": {}
     }
   ],
+  "sharedDir": "shared",
+  "dependenciesDir": "extern",
   "additionalData": {
     "soLink": "",
     "debugSoLink": "",
