@@ -32,13 +32,6 @@
       "additionalData": {}
     },
     {
-      "id": "scotland2",
-      "versionRange": "^0.1.4",
-      "additionalData": {
-        "includeQmod": false
-      }
-    },
-    {
       "id": "paper2_scotland2",
       "versionRange": "^4.6.4",
       "additionalData": {
