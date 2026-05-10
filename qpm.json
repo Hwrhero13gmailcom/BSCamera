@@ -39,6 +39,9 @@
       }
     }
   ],
+  "scripts": {
+    "build": "cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -B build && cmake --build ./build"
+  },
   "sharedDir": "shared",
   "dependenciesDir": "extern"
 }
