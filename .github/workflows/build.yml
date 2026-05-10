@@ -33,16 +33,6 @@ jobs:
           cd ${{ github.workspace }}
           qpm restore
 
-      - name: Download scotland2 so manually
-        run: |
-          mkdir -p ${{ github.workspace }}/extern/libs
-          SCOTLAND2_URL=$(curl -s https://api.github.com/repos/sc2ad/scotland2/releases/latest \
-            | jq -r '.assets[] | select(.name | endswith(".so") and (contains("debug") | not)) | .browser_download_url' \
-            | head -n 1)
-          echo "scotland2 url: $SCOTLAND2_URL"
-          curl -L -o ${{ github.workspace }}/extern/libs/libscotland2.so "$SCOTLAND2_URL"
-          ls -la ${{ github.workspace }}/extern/libs/
-
       - name: Install Ninja
         run: sudo apt-get install -y ninja-build
 
