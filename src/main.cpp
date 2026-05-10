@@ -28,7 +28,7 @@ custom_types::Helpers::Coroutine ApplyCameraOffset() {
         UnityEngine::WaitForSeconds::New_ctor(1.0f)
     );
 
-    auto* cam = UnityEngine::Camera::get_main();
+    UnityEngine::Camera* cam = UnityEngine::Camera::get_main().ptr();
     if (!cam) {
         logger.warn("Main camera not found");
         co_return;
