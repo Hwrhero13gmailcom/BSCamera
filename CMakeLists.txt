@@ -20,7 +20,6 @@ target_include_directories(${COMPILE_ID} PRIVATE ${INCLUDE_DIR})
 target_link_libraries(${COMPILE_ID} PRIVATE
     -llog
     -landroid
-    ${CMAKE_CURRENT_SOURCE_DIR}/extern/libs/libscotland2.so
     ${CMAKE_CURRENT_SOURCE_DIR}/extern/libs/libbeatsaber-hook.so
     ${CMAKE_CURRENT_SOURCE_DIR}/extern/libs/libcustom-types.so
     ${CMAKE_CURRENT_SOURCE_DIR}/extern/libs/libbsml.so
