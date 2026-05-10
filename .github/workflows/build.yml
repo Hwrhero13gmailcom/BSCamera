@@ -36,6 +36,9 @@ jobs:
       - name: Install Ninja
         run: sudo apt-get install -y ninja-build
 
+      - name: List extern libs
+        run: ls -la ${{ github.workspace }}/extern/libs/ || echo "No extern/libs"
+
       - name: Build
         run: |
           cd ${{ github.workspace }}
