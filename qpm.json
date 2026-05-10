@@ -4,30 +4,41 @@
     "id": "CameraOffsetMod",
     "version": "0.1.0",
     "url": null,
-    "additionalData": {}
+    "additionalData": {
+      "soLink": "",
+      "debugSoLink": "",
+      "overrideSoName": "camera-offset-mod_0_1_0"
+    }
   },
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^3.12.1",
+      "versionRange": "^6.4.2",
+      "additionalData": {}
+    },
+    {
+      "id": "bs-cordl",
+      "versionRange": "4007.*",
       "additionalData": {}
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.12.12",
+      "versionRange": "^0.18.3",
       "additionalData": {}
     },
     {
-      "id": "questui",
-      "versionRange": "^1.1.0",
+      "id": "bsml",
+      "versionRange": "^0.4.55",
       "additionalData": {}
+    },
+    {
+      "id": "paper2_scotland2",
+      "versionRange": "^4.6.4",
+      "additionalData": {
+        "includeQmod": false
+      }
     }
   ],
   "sharedDir": "shared",
-  "dependenciesDir": "extern",
-  "additionalData": {
-    "soLink": "",
-    "debugSoLink": "",
-    "overrideSoName": "camera-offset-mod_0_1_0"
-  }
+  "dependenciesDir": "extern"
 }
