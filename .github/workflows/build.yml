@@ -33,10 +33,14 @@ jobs:
           cd ${{ github.workspace }}
           qpm restore
 
+      - name: Install Ninja
+        run: sudo apt-get install -y ninja-build
+
       - name: Build
         run: |
           cd ${{ github.workspace }}
-          qpm s build
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -B build
+          cmake --build ./build
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
