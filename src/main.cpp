@@ -5,108 +5,89 @@
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML-Lite.hpp"
 #include "custom-types/shared/register.hpp"
-#include "GlobalNamespace/MainCamera.hpp"
 #include "UnityEngine/Camera.hpp"
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/Vector3.hpp"
 #include "UnityEngine/Quaternion.hpp"
+#include "HMUI/ViewController.hpp"
 
 static modloader::ModInfo modInfo{"CameraOffsetMod", "0.1.0", 0};
-static Paper::ConstLoggerContext<15UL> const logger = Paper::Logger::WithContext<"CameraOffset">();
+static auto logger = Paper::Logger::WithContext<"CameraOffset">();
 
-// ─── apply settings to camera ─────────────────────────────────────────────────
+// ─── apply settings ───────────────────────────────────────────────────────────
 
-static void ApplyCameraSettings(UnityEngine::Camera* cam) {
+static void ApplyCameraSettings() {
+    auto cam = UnityEngine::Camera::get_main();
     if (!cam) return;
 
-    auto& cfg = getConfig();
+    cam->set_fieldOfView(getConfig().FOV.GetValue());
 
-    // FOV
-    cam->set_fieldOfView(cfg.FOV);
-
-    // Position offset (relative to parent transform)
     auto t = cam->get_transform();
-    auto localPos = t->get_localPosition();
+    auto pos = t->get_localPosition();
     t->set_localPosition({
-        localPos.x + cfg.PosX,
-        localPos.y + cfg.PosY,
-        localPos.z + cfg.PosZ
+        pos.x + getConfig().PosX.GetValue(),
+        pos.y + getConfig().PosY.GetValue(),
+        pos.z + getConfig().PosZ.GetValue()
     });
 
-    // Rotation offset
-    auto localRot = t->get_localEulerAngles();
+    auto rot = t->get_localEulerAngles();
     t->set_localEulerAngles({
-        localRot.x + cfg.RotX,
-        localRot.y + cfg.RotY,
-        localRot.z + cfg.RotZ
+        rot.x + getConfig().RotX.GetValue(),
+        rot.y + getConfig().RotY.GetValue(),
+        rot.z + getConfig().RotZ.GetValue()
     });
-}
-
-// ─── hooks ────────────────────────────────────────────────────────────────────
-
-MAKE_AUTO_HOOK_MATCH(
-    MainCamera_Awake,
-    &GlobalNamespace::MainCamera::Awake,
-    void,
-    GlobalNamespace::MainCamera* self
-) {
-    MainCamera_Awake(self);
-    ApplyCameraSettings(self->get_gameObject()->GetComponent<UnityEngine::Camera*>());
 }
 
 // ─── settings menu ────────────────────────────────────────────────────────────
 
-static void BuildSettingsUI(UnityEngine::GameObject* parent) {
-    auto& cfg = getConfig();
+static void BuildSettingsUI(HMUI::ViewController* vc, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
+    if (!firstActivation) return;
+
+    auto parent = vc->get_gameObject();
 
     BSML::Lite::CreateText(parent->get_transform(), "Camera Offset Settings");
 
-    // FOV
     BSML::Lite::CreateSliderSetting(
-        parent->get_transform(), "FOV", 1.0f, cfg.FOV, 60.0f, 120.0f,
-        [](float val) {
-            getConfig().FOV = val;
-            getConfig().Save();
-        }
+        parent->get_transform(), "FOV", 1.0f, getConfig().FOV.GetValue(), 60.0f, 120.0f,
+        [](float val) { getConfig().FOV.SetValue(val); }
     );
 
-    // Position
     BSML::Lite::CreateText(parent->get_transform(), "Position Offset");
     BSML::Lite::CreateSliderSetting(
-        parent->get_transform(), "X", 0.01f, cfg.PosX, -0.5f, 0.5f,
-        [](float val) { getConfig().PosX = val; getConfig().Save(); }
+        parent->get_transform(), "X", 0.01f, getConfig().PosX.GetValue(), -0.5f, 0.5f,
+        [](float val) { getConfig().PosX.SetValue(val); }
     );
     BSML::Lite::CreateSliderSetting(
-        parent->get_transform(), "Y", 0.01f, cfg.PosY, -0.5f, 0.5f,
-        [](float val) { getConfig().PosY = val; getConfig().Save(); }
+        parent->get_transform(), "Y", 0.01f, getConfig().PosY.GetValue(), -0.5f, 0.5f,
+        [](float val) { getConfig().PosY.SetValue(val); }
     );
     BSML::Lite::CreateSliderSetting(
-        parent->get_transform(), "Z", 0.01f, cfg.PosZ, -0.5f, 0.5f,
-        [](float val) { getConfig().PosZ = val; getConfig().Save(); }
+        parent->get_transform(), "Z", 0.01f, getConfig().PosZ.GetValue(), -0.5f, 0.5f,
+        [](float val) { getConfig().PosZ.SetValue(val); }
     );
 
-    // Rotation
     BSML::Lite::CreateText(parent->get_transform(), "Rotation Offset");
     BSML::Lite::CreateSliderSetting(
-        parent->get_transform(), "Pitch (X)", 1.0f, cfg.RotX, -45.0f, 45.0f,
-        [](float val) { getConfig().RotX = val; getConfig().Save(); }
+        parent->get_transform(), "Pitch (X)", 1.0f, getConfig().RotX.GetValue(), -45.0f, 45.0f,
+        [](float val) { getConfig().RotX.SetValue(val); }
     );
     BSML::Lite::CreateSliderSetting(
-        parent->get_transform(), "Yaw (Y)", 1.0f, cfg.RotY, -45.0f, 45.0f,
-        [](float val) { getConfig().RotY = val; getConfig().Save(); }
+        parent->get_transform(), "Yaw (Y)", 1.0f, getConfig().RotY.GetValue(), -45.0f, 45.0f,
+        [](float val) { getConfig().RotY.SetValue(val); }
     );
     BSML::Lite::CreateSliderSetting(
-        parent->get_transform(), "Roll (Z)", 1.0f, cfg.RotZ, -45.0f, 45.0f,
-        [](float val) { getConfig().RotZ = val; getConfig().Save(); }
+        parent->get_transform(), "Roll (Z)", 1.0f, getConfig().RotZ.GetValue(), -45.0f, 45.0f,
+        [](float val) { getConfig().RotZ.SetValue(val); }
     );
 
-    // Reset button
     BSML::Lite::CreateUIButton(parent->get_transform(), "Reset to Defaults", []() {
-        auto& cfg = getConfig();
-        cfg.FOV  = 90.0f;
-        cfg.PosX = cfg.PosY = cfg.PosZ = 0.0f;
-        cfg.RotX = cfg.RotY = cfg.RotZ = 0.0f;
-        cfg.Save();
+        getConfig().FOV.SetValue(90.0f);
+        getConfig().PosX.SetValue(0.0f);
+        getConfig().PosY.SetValue(0.0f);
+        getConfig().PosZ.SetValue(0.0f);
+        getConfig().RotX.SetValue(0.0f);
+        getConfig().RotY.SetValue(0.0f);
+        getConfig().RotZ.SetValue(0.0f);
     });
 }
 
@@ -121,9 +102,11 @@ extern "C" void setup(CModInfo* info) {
 extern "C" void late_load() {
     il2cpp_functions::Init();
 
-    INSTALL_HOOK(logger, MainCamera_Awake);
-
-    BSML::Register::RegisterSettingsMenu("Camera Offset", BuildSettingsUI, false);
+    BSML::Register::RegisterSettingsMenu(
+        "Camera Offset",
+        BuildSettingsUI,
+        false
+    );
 
     logger.info("CameraOffsetMod loaded");
 }
