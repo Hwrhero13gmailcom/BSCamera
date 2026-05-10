@@ -18,9 +18,14 @@ jobs:
 
       - name: Install QPM
         run: |
-          curl -o qpm --location https://github.com/QuestPackageManager/QPM.CLI/releases/latest/download/qpm-linux-x64
+          QPM_URL=$(curl -s https://api.github.com/repos/QuestPackageManager/QPM.CLI/releases/latest \
+            | jq -r '.assets[] | select(.name | contains("linux") and contains("x86_64") or (contains("linux") and contains("x64"))) | .browser_download_url' \
+            | head -n 1)
+          echo "Downloading QPM from: $QPM_URL"
+          curl -L -o qpm "$QPM_URL"
           chmod +x qpm
           sudo mv qpm /usr/local/bin/qpm
+          qpm --version
 
       - name: QPM Restore
         run: |
