@@ -31,6 +31,7 @@ target_link_libraries(${COMPILE_ID} PRIVATE
     -llog
     -landroid
     ${CMAKE_CURRENT_SOURCE_DIR}/extern/libs/libcustom-types.so
+    ${CMAKE_CURRENT_SOURCE_DIR}/extern/libs/libconfig-utils.so
 )
 
 include(extern.cmake)
