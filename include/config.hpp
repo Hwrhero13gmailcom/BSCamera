@@ -9,6 +9,7 @@ struct CameraConfig {
     float xRotation = 0.0f;
     float yRotation = 0.0f;
     float zRotation = 0.0f;
+    float fov = 0.0f;
 };
 
 static const std::string CONFIG_PATH = "/sdcard/ModData/com.beatgames.beatsaber/Mods/CameraOffsetMod/config.txt";
@@ -34,6 +35,7 @@ inline CameraConfig LoadConfig() {
         if (key == "xRotation") cfg.xRotation = val;
         if (key == "yRotation") cfg.yRotation = val;
         if (key == "zRotation") cfg.zRotation = val;
+        if (key == "fov")       cfg.fov       = val;
     }
     return cfg;
 }
@@ -47,4 +49,5 @@ inline void SaveConfig(const CameraConfig& cfg) {
     f << "xRotation=" << cfg.xRotation << "\n";
     f << "yRotation=" << cfg.yRotation << "\n";
     f << "zRotation=" << cfg.zRotation << "\n";
+    f << "fov="       << cfg.fov       << "\n";
 }
