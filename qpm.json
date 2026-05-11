@@ -7,7 +7,9 @@
     "additionalData": {
       "soLink": "",
       "debugSoLink": "",
-      "overrideSoName": "camera-offset-mod"
+      "overrideSoName": "camera-offset-mod",
+      "isLibrary": false,
+      "needsRestart": false
     }
   },
   "dependencies": [
