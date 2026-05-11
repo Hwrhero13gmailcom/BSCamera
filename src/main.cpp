@@ -7,7 +7,6 @@
 #include "paper2_scotland2/shared/logger.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML-Lite.hpp"
-#include "bsml/shared/BSML/Events.hpp"
 #include "HMUI/ViewController.hpp"
 
 #include "GlobalNamespace/zzzz__MainCamera_def.hpp"
@@ -41,7 +40,9 @@ static void ApplyOffset() {
     rot.y += config.yRotation;
     rot.z += config.zRotation;
     t->set_localEulerAngles(rot);
-    logger.info("Camera offset applied: x={} y={} z={}", config.xOffset, config.yOffset, config.zOffset);
+    if (config.fov > 0.0f)
+        cam->set_fieldOfView(config.fov);
+    logger.info("Camera offset applied");
 }
 
 custom_types::Helpers::Coroutine ApplyCameraOffsetCoro() {
@@ -51,8 +52,6 @@ custom_types::Helpers::Coroutine ApplyCameraOffsetCoro() {
     ApplyOffset();
     co_return;
 }
-
-// ---- Settings UI ----
 
 void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     if (!firstActivation) return;
@@ -65,13 +64,12 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
     BSML::Lite::CreateSliderSetting(t, "X Rotation", 1.0f,  config.xRotation, -180.0f, 180.0f, 0.0f, true, {}, [](float v){ config.xRotation = v; SaveConfig(config); });
     BSML::Lite::CreateSliderSetting(t, "Y Rotation", 1.0f,  config.yRotation, -180.0f, 180.0f, 0.0f, true, {}, [](float v){ config.yRotation = v; SaveConfig(config); });
     BSML::Lite::CreateSliderSetting(t, "Z Rotation", 1.0f,  config.zRotation, -180.0f, 180.0f, 0.0f, true, {}, [](float v){ config.zRotation = v; SaveConfig(config); });
+    BSML::Lite::CreateSliderSetting(t, "FOV",        1.0f,  config.fov,        40.0f,  150.0f, 80.0f, true, {}, [](float v){ config.fov       = v; SaveConfig(config); });
 
     BSML::Lite::CreateUIButton(t, "Apply Now", [](){
         ApplyOffset();
     });
 }
-
-// ---- Entry point ----
 
 extern "C" __attribute__((visibility("default"))) void setup(CModInfo* info) {
     info->id = MOD_ID;
@@ -83,19 +81,14 @@ extern "C" __attribute__((visibility("default"))) void setup(CModInfo* info) {
 extern "C" __attribute__((visibility("default"))) void late_load() {
     il2cpp_functions::Init();
     config = LoadConfig();
-    logger.info("Camera Offset Mod late_load — config loaded");
 
-    // Apply offset on game restart (scene load)
-    BSML::Events::onGameDidRestart += [](){
-        auto* go = UnityEngine::GameObject::New_ctor();
-        UnityEngine::GameObject::DontDestroyOnLoad(go);
-        auto* mb = go->AddComponent<UnityEngine::MonoBehaviour*>();
-        mb->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(ApplyCameraOffsetCoro()));
-    };
+    auto* go = UnityEngine::GameObject::New_ctor();
+    UnityEngine::GameObject::DontDestroyOnLoad(go);
+    auto* mb = go->AddComponent<UnityEngine::MonoBehaviour*>();
+    mb->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(ApplyCameraOffsetCoro()));
 
-    // Register settings menu — must be after BSML::Init
     BSML::Init();
     BSML::Register::RegisterSettingsMenu("Camera Offset", DidActivate, false);
 
-    logger.info("Camera Offset Mod loaded — settings registered");
+    logger.info("Camera Offset Mod loaded");
 }
