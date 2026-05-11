@@ -52,7 +52,7 @@ custom_types::Helpers::Coroutine ApplyCameraOffsetCoro() {
 void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     if (!firstActivation) return;
     auto* container = BSML::Lite::CreateScrollableSettingsContainer(self->get_transform());
-    auto* t = container->get_transform();
+    UnityEngine::Transform* t = container->get_transform().ptr();
 
     BSML::Lite::CreateSliderSetting(t, "X Offset",    0.01f, config.xOffset,   -2.0f, 2.0f,   0.0f, true, {}, [](float v){ config.xOffset   = v; SaveConfig(config); });
     BSML::Lite::CreateSliderSetting(t, "Y Offset",    0.01f, config.yOffset,   -2.0f, 2.0f,   0.0f, true, {}, [](float v){ config.yOffset   = v; SaveConfig(config); });
