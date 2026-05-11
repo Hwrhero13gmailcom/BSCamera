@@ -7,6 +7,7 @@
 #include "paper2_scotland2/shared/logger.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML-Lite.hpp"
+#include "bsml/shared/BSML/Events.hpp"
 #include "HMUI/ViewController.hpp"
 
 #include "GlobalNamespace/zzzz__MainCamera_def.hpp"
@@ -26,17 +27,21 @@ static CameraConfig config;
 static auto logger = Paper::Logger::WithContext<MOD_ID>();
 
 static void ApplyOffset() {
-    UnityEngine::Camera* cam = UnityEngine::Camera::get_main().ptr();
-    if (!cam) return;
-    UnityEngine::Transform* t = cam->get_transform().ptr();
+    auto* cam = UnityEngine::Camera::get_main().ptr();
+    if (!cam) { logger.warn("No main camera found"); return; }
+    auto* t = cam->get_transform().ptr();
     if (!t) return;
     auto pos = t->get_localPosition();
-    pos.x += config.xOffset; pos.y += config.yOffset; pos.z += config.zOffset;
+    pos.x += config.xOffset;
+    pos.y += config.yOffset;
+    pos.z += config.zOffset;
     t->set_localPosition(pos);
     auto rot = t->get_localEulerAngles();
-    rot.x += config.xRotation; rot.y += config.yRotation; rot.z += config.zRotation;
+    rot.x += config.xRotation;
+    rot.y += config.yRotation;
+    rot.z += config.zRotation;
     t->set_localEulerAngles(rot);
-    logger.info("Camera offset applied");
+    logger.info("Camera offset applied: x={} y={} z={}", config.xOffset, config.yOffset, config.zOffset);
 }
 
 custom_types::Helpers::Coroutine ApplyCameraOffsetCoro() {
@@ -51,17 +56,17 @@ custom_types::Helpers::Coroutine ApplyCameraOffsetCoro() {
 
 void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     if (!firstActivation) return;
-    auto* container = BSML::Lite::CreateScrollableSettingsContainer(self->get_transform());
-    UnityEngine::Transform* t = container->get_transform().ptr();
+    auto* container = BSML::Lite::CreateScrollableSettingsContainer(self->get_transform().ptr());
+    auto* t = container->get_transform().ptr();
 
-    BSML::Lite::CreateSliderSetting(t, "X Offset",    0.01f, config.xOffset,   -2.0f, 2.0f,   0.0f, true, {}, [](float v){ config.xOffset   = v; SaveConfig(config); });
-    BSML::Lite::CreateSliderSetting(t, "Y Offset",    0.01f, config.yOffset,   -2.0f, 2.0f,   0.0f, true, {}, [](float v){ config.yOffset   = v; SaveConfig(config); });
-    BSML::Lite::CreateSliderSetting(t, "Z Offset",    0.01f, config.zOffset,   -2.0f, 2.0f,   0.0f, true, {}, [](float v){ config.zOffset   = v; SaveConfig(config); });
-    BSML::Lite::CreateSliderSetting(t, "X Rotation",  1.0f,  config.xRotation, -180.0f, 180.0f, 0.0f, true, {}, [](float v){ config.xRotation = v; SaveConfig(config); });
-    BSML::Lite::CreateSliderSetting(t, "Y Rotation",  1.0f,  config.yRotation, -180.0f, 180.0f, 0.0f, true, {}, [](float v){ config.yRotation = v; SaveConfig(config); });
-    BSML::Lite::CreateSliderSetting(t, "Z Rotation",  1.0f,  config.zRotation, -180.0f, 180.0f, 0.0f, true, {}, [](float v){ config.zRotation = v; SaveConfig(config); });
+    BSML::Lite::CreateSliderSetting(t, "X Offset",   0.01f, config.xOffset,   -2.0f,   2.0f,   0.0f, true, {}, [](float v){ config.xOffset   = v; SaveConfig(config); });
+    BSML::Lite::CreateSliderSetting(t, "Y Offset",   0.01f, config.yOffset,   -2.0f,   2.0f,   0.0f, true, {}, [](float v){ config.yOffset   = v; SaveConfig(config); });
+    BSML::Lite::CreateSliderSetting(t, "Z Offset",   0.01f, config.zOffset,   -2.0f,   2.0f,   0.0f, true, {}, [](float v){ config.zOffset   = v; SaveConfig(config); });
+    BSML::Lite::CreateSliderSetting(t, "X Rotation", 1.0f,  config.xRotation, -180.0f, 180.0f, 0.0f, true, {}, [](float v){ config.xRotation = v; SaveConfig(config); });
+    BSML::Lite::CreateSliderSetting(t, "Y Rotation", 1.0f,  config.yRotation, -180.0f, 180.0f, 0.0f, true, {}, [](float v){ config.yRotation = v; SaveConfig(config); });
+    BSML::Lite::CreateSliderSetting(t, "Z Rotation", 1.0f,  config.zRotation, -180.0f, 180.0f, 0.0f, true, {}, [](float v){ config.zRotation = v; SaveConfig(config); });
 
-    BSML::Lite::CreateUIButton(t, "Apply Now", [self](){
+    BSML::Lite::CreateUIButton(t, "Apply Now", [](){
         ApplyOffset();
     });
 }
@@ -69,22 +74,28 @@ void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToH
 // ---- Entry point ----
 
 extern "C" __attribute__((visibility("default"))) void setup(CModInfo* info) {
-    info->id = MOD_ID; info->version = VERSION; info->version_long = 0;
+    info->id = MOD_ID;
+    info->version = VERSION;
+    info->version_long = 0;
     logger.info("Camera Offset Mod setup");
 }
 
 extern "C" __attribute__((visibility("default"))) void late_load() {
     il2cpp_functions::Init();
     config = LoadConfig();
-    logger.info("Camera Offset Mod late_load");
+    logger.info("Camera Offset Mod late_load — config loaded");
 
-    auto* go = UnityEngine::GameObject::New_ctor();
-    UnityEngine::GameObject::DontDestroyOnLoad(go);
-    auto* mb = go->AddComponent<UnityEngine::MonoBehaviour*>();
-    mb->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(ApplyCameraOffsetCoro()));
+    // Apply offset on game restart (scene load)
+    BSML::Events::onGameDidRestart += [](){
+        auto* go = UnityEngine::GameObject::New_ctor();
+        UnityEngine::GameObject::DontDestroyOnLoad(go);
+        auto* mb = go->AddComponent<UnityEngine::MonoBehaviour*>();
+        mb->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(ApplyCameraOffsetCoro()));
+    };
 
+    // Register settings menu — must be after BSML::Init
     BSML::Init();
     BSML::Register::RegisterSettingsMenu("Camera Offset", DidActivate, false);
 
-    logger.info("Camera Offset Mod loaded");
+    logger.info("Camera Offset Mod loaded — settings registered");
 }
