@@ -7,7 +7,7 @@
     "additionalData": {
       "soLink": "",
       "debugSoLink": "",
-      "overrideSoName": "era-offset-mod_0_1_0"
+      "overrideSoName": "camera-offset-mod"
     }
   },
   "dependencies": [
