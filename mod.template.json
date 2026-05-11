@@ -19,7 +19,7 @@
     }
   ],
   "modFiles": [
-    "libcamera-offset-mod_0_1_0.so"
+    "libera-offset-mod_0_1_0.so"
   ],
   "libraryFiles": []
 }
