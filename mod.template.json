@@ -1,7 +1,7 @@
 {
   "name": "CameraOffsetMod",
   "id": "CameraOffsetMod",
-  "author": "YourName",
+  "author": "Zylo",
   "version": "0.1.0",
   "packageId": "com.beatgames.beatsaber",
   "packageVersion": "1.40.8_7379",
@@ -19,7 +19,7 @@
     }
   ],
   "modFiles": [
-    "libera-offset-mod_0_1_0.so"
+    "libcamera-offset-mod.so"
   ],
   "libraryFiles": []
 }
