@@ -1,94 +1,94 @@
 #include "config.hpp"
 
-#include "scotland2/shared/modloader.h"
-#include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
-#include "custom-types/shared/coroutine.hpp"
-#include "custom-types/shared/register.hpp"
-#include "paper2_scotland2/shared/logger.hpp"
+#include "beatsaber-hook/shared/utils/hooking.hpp"
+#include "beatsaber-hook/shared/utils/logging.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML-Lite.hpp"
+#include "UnityEngine/Camera.hpp"
+#include "UnityEngine/Transform.hpp"
+#include "UnityEngine/Vector3.hpp"
 #include "HMUI/ViewController.hpp"
 
-#include "GlobalNamespace/zzzz__MainCamera_def.hpp"
-#include "GlobalNamespace/zzzz__MainCamera_impl.hpp"
-#include "UnityEngine/zzzz__Camera_def.hpp"
-#include "UnityEngine/zzzz__Camera_impl.hpp"
-#include "UnityEngine/zzzz__Transform_def.hpp"
-#include "UnityEngine/zzzz__Transform_impl.hpp"
-#include "UnityEngine/zzzz__GameObject_def.hpp"
-#include "UnityEngine/zzzz__GameObject_impl.hpp"
-#include "UnityEngine/zzzz__MonoBehaviour_def.hpp"
-#include "UnityEngine/zzzz__MonoBehaviour_impl.hpp"
-#include "UnityEngine/WaitForSeconds.hpp"
+static modloader::ModInfo modInfo{"CameraOffsetMod", "0.1.0", 0};
+static auto logger = Paper::Logger::WithContext<"CameraOffset">();
 
-static modloader::ModInfo modInfo{MOD_ID, VERSION, 0};
-static CameraConfig config;
-static auto logger = Paper::Logger::WithContext<MOD_ID>();
+// ─── apply settings ───────────────────────────────────────────────────────────
 
-static void ApplyOffset() {
-    auto* cam = UnityEngine::Camera::get_main().ptr();
-    if (!cam) { logger.warn("No main camera found"); return; }
-    auto* t = cam->get_transform().ptr();
-    if (!t) return;
-    auto pos = t->get_localPosition();
-    pos.x += config.xOffset;
-    pos.y += config.yOffset;
-    pos.z += config.zOffset;
-    t->set_localPosition(pos);
-    auto rot = t->get_localEulerAngles();
-    rot.x += config.xRotation;
-    rot.y += config.yRotation;
-    rot.z += config.zRotation;
-    t->set_localEulerAngles(rot);
-    if (config.fov > 0.0f)
-        cam->set_fieldOfView(config.fov);
-    logger.info("Camera offset applied");
+static void ApplyCameraSettings() {
+    auto cam = UnityEngine::Camera::get_main();
+    if (!cam) return;
+
+    auto& cfg = getConfig();
+
+    cam->set_fieldOfView(cfg.FOV);
+
+    auto t = cam->get_transform();
+    t->set_localPosition({cfg.PosX, cfg.PosY, cfg.PosZ});
+    t->set_localEulerAngles({cfg.RotX, cfg.RotY, cfg.RotZ});
 }
 
-custom_types::Helpers::Coroutine ApplyCameraOffsetCoro() {
-    co_yield reinterpret_cast<System::Collections::IEnumerator*>(
-        UnityEngine::WaitForSeconds::New_ctor(1.5f)
-    );
-    ApplyOffset();
-    co_return;
-}
+// ─── settings menu ────────────────────────────────────────────────────────────
 
-void DidActivate(HMUI::ViewController* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
+static void BuildSettingsUI(HMUI::ViewController* vc, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     if (!firstActivation) return;
-    auto* container = BSML::Lite::CreateScrollableSettingsContainer(self->get_transform().ptr());
-    auto* t = container->get_transform().ptr();
 
-    BSML::Lite::CreateSliderSetting(t, "X Offset",   0.01f, config.xOffset,   -2.0f,   2.0f,   0.0f, true, {}, [](float v){ config.xOffset   = v; SaveConfig(config); });
-    BSML::Lite::CreateSliderSetting(t, "Y Offset",   0.01f, config.yOffset,   -2.0f,   2.0f,   0.0f, true, {}, [](float v){ config.yOffset   = v; SaveConfig(config); });
-    BSML::Lite::CreateSliderSetting(t, "Z Offset",   0.01f, config.zOffset,   -2.0f,   2.0f,   0.0f, true, {}, [](float v){ config.zOffset   = v; SaveConfig(config); });
-    BSML::Lite::CreateSliderSetting(t, "X Rotation", 1.0f,  config.xRotation, -180.0f, 180.0f, 0.0f, true, {}, [](float v){ config.xRotation = v; SaveConfig(config); });
-    BSML::Lite::CreateSliderSetting(t, "Y Rotation", 1.0f,  config.yRotation, -180.0f, 180.0f, 0.0f, true, {}, [](float v){ config.yRotation = v; SaveConfig(config); });
-    BSML::Lite::CreateSliderSetting(t, "Z Rotation", 1.0f,  config.zRotation, -180.0f, 180.0f, 0.0f, true, {}, [](float v){ config.zRotation = v; SaveConfig(config); });
-    BSML::Lite::CreateSliderSetting(t, "FOV",        1.0f,  config.fov,        40.0f,  150.0f, 80.0f, true, {}, [](float v){ config.fov       = v; SaveConfig(config); });
+    auto parent = vc->get_gameObject()->get_transform();
+    auto& cfg = getConfig();
 
-    BSML::Lite::CreateUIButton(t, "Apply Now", [](){
-        ApplyOffset();
+    BSML::Lite::CreateText(parent, "FOV & Camera Offset");
+
+    BSML::Lite::CreateSliderSetting(parent, "FOV", 1.0f, cfg.FOV, 60.0f, 120.0f,
+        [](float val) { getConfig().FOV = val; SaveConfig(); ApplyCameraSettings(); }
+    );
+
+    BSML::Lite::CreateText(parent, "Position");
+    BSML::Lite::CreateSliderSetting(parent, "X", 0.01f, cfg.PosX, -1.0f, 1.0f,
+        [](float val) { getConfig().PosX = val; SaveConfig(); ApplyCameraSettings(); }
+    );
+    BSML::Lite::CreateSliderSetting(parent, "Y", 0.01f, cfg.PosY, -1.0f, 1.0f,
+        [](float val) { getConfig().PosY = val; SaveConfig(); ApplyCameraSettings(); }
+    );
+    BSML::Lite::CreateSliderSetting(parent, "Z", 0.01f, cfg.PosZ, -1.0f, 1.0f,
+        [](float val) { getConfig().PosZ = val; SaveConfig(); ApplyCameraSettings(); }
+    );
+
+    BSML::Lite::CreateText(parent, "Rotation");
+    BSML::Lite::CreateSliderSetting(parent, "Pitch (X)", 1.0f, cfg.RotX, -45.0f, 45.0f,
+        [](float val) { getConfig().RotX = val; SaveConfig(); ApplyCameraSettings(); }
+    );
+    BSML::Lite::CreateSliderSetting(parent, "Yaw (Y)", 1.0f, cfg.RotY, -45.0f, 45.0f,
+        [](float val) { getConfig().RotY = val; SaveConfig(); ApplyCameraSettings(); }
+    );
+    BSML::Lite::CreateSliderSetting(parent, "Roll (Z)", 1.0f, cfg.RotZ, -45.0f, 45.0f,
+        [](float val) { getConfig().RotZ = val; SaveConfig(); ApplyCameraSettings(); }
+    );
+
+    BSML::Lite::CreateUIButton(parent, "Reset to Defaults", []() {
+        auto& cfg = getConfig();
+        cfg.FOV  = 90.0f;
+        cfg.PosX = cfg.PosY = cfg.PosZ = 0.0f;
+        cfg.RotX = cfg.RotY = cfg.RotZ = 0.0f;
+        SaveConfig();
+        ApplyCameraSettings();
     });
 }
 
-extern "C" __attribute__((visibility("default"))) void setup(CModInfo* info) {
-    info->id = MOD_ID;
-    info->version = VERSION;
-    info->version_long = 0;
-    logger.info("Camera Offset Mod setup");
+// ─── entry points ─────────────────────────────────────────────────────────────
+
+extern "C" void setup(CModInfo* info) {
+    *info = modInfo.to_c();
+    logger.info("CameraOffsetMod setup");
 }
 
-extern "C" __attribute__((visibility("default"))) void late_load() {
-    il2cpp_functions::Init();
-    config = LoadConfig();
+extern "C" void late_load() {
+    LoadConfig();
+    ApplyCameraSettings();
 
-    auto* go = UnityEngine::GameObject::New_ctor();
-    UnityEngine::GameObject::DontDestroyOnLoad(go);
-    auto* mb = go->AddComponent<UnityEngine::MonoBehaviour*>();
-    mb->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(ApplyCameraOffsetCoro()));
+    BSML::Register::RegisterSettingsMenu(
+        "Camera Offset",
+        BuildSettingsUI,
+        false
+    );
 
-    BSML::Init();
-    BSML::Register::RegisterSettingsMenu("Camera Offset", DidActivate, false);
-
-    logger.info("Camera Offset Mod loaded");
+    logger.info("CameraOffsetMod loaded");
 }
